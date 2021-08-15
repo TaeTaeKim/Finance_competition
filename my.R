@@ -33,6 +33,8 @@ rm(shinhan1903); rm(shinhan1909); rm(shinhan2003); rm(shinhan2009);rm(shinhan210
 online <- read.csv("온라인 품목별 소비데이터.csv")
 
 # ===========3. 한국 투자증권 데이터 로드=============
-
-
+Investment = read_excel("동학개미운동 신규 고객 투자 정보.xlsx",sheet=1)
+Investment = as.data.frame(Investment)
 # ===========4. 서울시 가맹점 데이터 로드=============
+StoreData = read_excel("광역시도별 업종별 가맹점 데이터.xlsx",sheet=1)
+StoreData = as.data.frame(StoreData)
