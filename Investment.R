@@ -86,3 +86,71 @@ InvestData = cbind(InvestData,Invest_subset$업종명)
 names(InvestData)[16] = '업종명'
 InvestData[InvestData$업종명=='character(0)','업종명'] = '제약'
 str(InvestData)
+
+
+
+#-------------------------------#
+#위에서 처리한 InvestData를 가져와 진행
+InvestData <- read.csv("InvestData.csv")
+
+#범주형 변수들을 factor형으로 변환
+InvestData$고객성별구분코드 <- as.factor(InvestData$고객성별구분코드)
+InvestData$동일나이군구분코드 <- as.factor(InvestData$동일나이군구분코드)
+InvestData$주소.시도. <- as.factor(InvestData$주소.시도.)
+InvestData$업종명 <- as.factor(InvestData$업종명)
+
+
+##주문수량에 대한 회귀분석
+
+#고객성별구분코드, 동일나이군구분코드, 업종명만 독립변수로 사용
+
+#단순회귀분석
+Invest_c_lm <- lm(주문수량 ~고객성별구분코드 + 동일나이군구분코드 + 업종명, data = InvestData)
+summary(Invest_c_lm)
+
+
+#Lasso, Ridge
+InvestData_c <- InvestData %>% select('고객성별구분코드', '동일나이군구분코드', '업종명', '주문수량')
+
+library(mltools)
+library(data.table)
+library(glmnet)
+
+OnehotInvest <- one_hot(as.data.table(InvestData_c))
+
+Invest_x <- as.matrix(OnehotInvest %>% select(-'주문수량'))
+Invest_y <- as.matrix(OnehotInvest %>% select('주문수량'))
+
+fit_lasso_c <- cv.glmnet(Invest_x, Invest_y, family = "gaussian")
+fit_ridge_c <- cv.glmnet(Invest_x, Invest_y, family = "gaussian", alpha = 0)
+
+coef(fit_lasso_c)
+coef(fit_ridge_c)
+
+
+
+##실주문단가에 대한 회귀분석
+
+#단순선형회귀
+Invest_p_lm <- lm(실주문단가 ~ 고객성별구분코드 + 동일나이군구분코드 + 업종명, data = InvestData)
+summary(Invest_p_lm)
+
+
+#Lasso, Ridge
+InvestData_p<- InvestData %>% select('고객성별구분코드', '동일나이군구분코드', '업종명', '실주문단가')
+
+library(mltools)
+library(data.table)
+library(glmnet)
+
+OnehotInvest <- one_hot(as.data.table(InvestData_p))
+
+Invest_x <- as.matrix(OnehotInvest %>% select(-'실주문단가'))
+Invest_y <- as.matrix(OnehotInvest %>% select('실주문단가'))
+
+fit_lasso_p <- cv.glmnet(Invest_x, Invest_y, family = "gaussian")
+fit_ridge_p <- cv.glmnet(Invest_x, Invest_y, family = "gaussian", alpha = 0)
+
+coef(fit_lasso_p)
+coef(fit_ridge_p)
+
