@@ -5,16 +5,19 @@
 sales_sum <- online %>%
   group_by(품목중분류명, 기준년월) %>%
   summarise(매출금액 = sum(매출금액))
-sales_sum <- as.data.frame(online_sum)
+sales_sum <- as.data.frame(sales_sum)
 
 #기타결제, 기타교육비, 디지털, 레저, 신선요리재료, 취미/특기 등이 증가세를 보임
 
 
 #코로나 전후로 데이터를 나눈 후 
-#매출건수 상위 10개 품목 비교
+#매출건수 / 매출금액 상위 10개 품목 비교
+#건수로 할 것인가 금액으로 할 것인가?
+
 online_bc <- online[online$기준년월 %in% c(201903, 201909), ]
 online_ac <- online[online$기준년월 %in% c(202003, 202009, 202103), ]
 
+#매출건수
 count_bc <- online_bc %>%
   group_by(품목중분류명) %>%
   summarise(매출건수 = sum(매출건수))
@@ -32,9 +35,35 @@ count_ac10 <- count_ac[order(count_ac$매출건수, decreasing = TRUE), ] %>%
   head(10)
 rm(count_ac)
 
+count_bc10$매출건수평균 <- count_bc10$매출건수 / 2  
+count_ac10$매출건수평균 <- count_ac10$매출건수 / 3
+
 count_bc10
 count_ac10
-#신선/요리재료, 가공식품,건강식품이 증가하고 여행이 감소함
+
+#매출금액
+sales_bc <- online_bc %>%
+  group_by(품목중분류명) %>%
+  summarise(매출금액 = sum(매출금액))
+sales_bc <- as.data.frame(sales_bc)
+sales_bc10 <- sales_bc %>%
+  arrange(desc(), 매출금액) %>%
+  head(10)
+
+sales_ac <- online_ac %>%
+  group_by(품목중분류명) %>%
+  summarise(매출금액 = sum(매출금액))
+sales_ac <- as.data.frame(sales_ac)
+sales_ac10 <- sales_ac %>%
+  arrange(desc(), 매출금액) %>%
+  head(10)
+rm(count_ac)
+
+sales_bc10$매출금액평균 <- sales_bc10$매출금액 / 2  
+sales_ac10$매출금액평균 <- sales_ac10$매출금액 / 3
+
+sales_bc10
+sales_ac10
 
 
 
@@ -43,16 +72,20 @@ count_ac10
 #전처리한 데이터를 가져옴
 InvestData <- read.csv("InvestData.csv")
 
-#사람들이 가장 많이 투자한 상위 10개 업종
-invest_count <- InvestData %>%
+#사람들이 가장 많이 투자한 상위 10개 업종 - 매수에서 주문총금액 상위 10개
+InvestData['주문총금액'] = InvestData$실주문단가 * InvestData$주문수량
+Invest_sell = InvestData %>% filter(매도매수구분코드==1) %>% select('고객성별구분코드','동일나이군구분코드','업종명','주문총금액')
+Invest_buy = InvestData %>% filter(매도매수구분코드==2) %>% select('고객성별구분코드','동일나이군구분코드','업종명','주문총금액')
+
+buy_sum <- Invest_buy %>%
   group_by(업종명) %>%
-  summarise(주문수량 = sum(주문수량))
-invest_count <- as.data.frame(invest_count)
+  summarise(주문총금액 = sum(주문총금액))
+buy_sum <- as.data.frame(buy_sum)
 
-invest_count10 <- invest_count[order(invest_count$주문수량, decreasing = TRUE), ] %>%
+buy_sum10 <- buy_sum %>%
+  arrange(desc(), 주문총금액) %>%
   head(10)
-rm(invest_count)
-
+rm(buy_sum)
 
 
 ###신한카드 가맹점 데이터에 대한 일차원 분석
@@ -91,14 +124,15 @@ sales_sum$매출변화_퍼센트 <- round(sales_sum$매출변화 / sales_sum$카
 sales_sum %>%
   filter(매출변화 < 0) %>%
   arrange(., 매출변화_퍼센트) %>%
-  head(10)
+  head(10) %>%
+  select(업종중분류, 매출변화, 매출변화_퍼센트)
 
 #총매출변화 증가 상위 10개 업종
 sales_sum %>%
   filter(매출변화 > 0) %>%
   arrange(desc(), 매출변화_퍼센트) %>%
-  head(10)
-
+  head(10) %>%
+  select(업종중분류, 매출변화, 매출변화_퍼센트)
 
 
 #점당평균매출의 변화
@@ -123,17 +157,19 @@ sales_mean <- sales_mean_bc %>%
 
 rm(sales_mean_bc, sales_mean_ac)
 
-sales_mean$매출변화 <- (sales_mean$점당평균매출_ac - sales_mean$점당평균매출_bc)
-sales_mean$매출변화_퍼센트 <- round(sales_mean$매출변화 / sales_mean$점당평균매출_bc, 4)*100
+sales_mean$평균매출변화 <- (sales_mean$점당평균매출_ac - sales_mean$점당평균매출_bc)
+sales_mean$평균매출변화_퍼센트 <- round(sales_mean$평균매출변화 / sales_mean$점당평균매출_bc, 4)*100
 
 #점당평균매출 감소 상위 10개 업종
 sales_mean %>%
-  filter(매출변화 < 0) %>%
-  arrange(., 매출변화_퍼센트) %>%
-  head(10)
+  filter(평균매출변화 < 0) %>%
+  arrange(., 평균매출변화_퍼센트) %>%
+  head(10) %>%
+  select(업종중분류, 평균매출변화, 평균매출변화_퍼센트)
 
 #점당평균매출 증가 상위 10개 업종
 sales_mean %>%
-  filter(매출변화 > 0) %>%
-  arrange(desc(), 매출변화_퍼센트) %>%
-  head(10)
+  filter(평균매출변화 > 0) %>%
+  arrange(desc(), 평균매출변화_퍼센트) %>%
+  head(10) %>%
+  select(업종중분류, 평균매출변화, 평균매출변화_퍼센트)
