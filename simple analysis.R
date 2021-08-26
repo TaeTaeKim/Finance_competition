@@ -1,14 +1,18 @@
 ###온라인 소비데이터에 대한 일차원 분석
-
+library(ggplot2)
 #기준년월에 따른 품목별 매출금액 총합
 
 sales_sum <- online %>%
   group_by(품목중분류명, 기준년월) %>%
   summarise(매출금액 = sum(매출금액))
-sales_sum <- as.data.frame(online_sum)
+sales_sum <- as.data.frame(sales_sum)
+sales_sum$품목중분류명 = as.factor(sales_sum$품목중분류명)
 
+sales_sum$매출금액 = log(sales_sum$매출금액)  
+head(sales_sum)
+p = ggplot(data = sales_sum,mapping = aes(factor(기준년월),매출금액,color = 품목중분류명))
+p+geom_line()+labs(title = "온라인품목별 매출변화")
 #기타결제, 기타교육비, 디지털, 레저, 신선요리재료, 취미/특기 등이 증가세를 보임
-
 
 #코로나 전후로 데이터를 나눈 후 
 #매출건수 상위 10개 품목 비교
