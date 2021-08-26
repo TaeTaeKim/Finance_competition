@@ -5,7 +5,7 @@ library(readxl)
 
 ######### working directory설정
 
-#setwd(r'(C:\Users\hyeon\Desktop\Hyeon\Finance_competition\data\서울시 지역단위(집계구 업데이트))')
+#setwd(r'(C:\Users\hyeon\Desktop\Hyeon\Finance_competition\data)')
 setwd("C:/Users/TaeyunKim/Documents/R_script/FInance_data")
 
 
