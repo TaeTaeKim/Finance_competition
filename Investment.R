@@ -95,6 +95,9 @@ str(InvestData)
 #위에서 처리한 InvestData를 가져와 진행 
 InvestData <- read.csv("InvestData.csv")
 
+InvestData <- InvestData %>%
+  filter(업종명 != '상장폐지')
+#업종명 상장폐지 삭제
 
 #범주형 변수들을 factor형으로 변환
 InvestData$고객성별구분코드 <- as.factor(InvestData$고객성별구분코드)
@@ -104,12 +107,18 @@ InvestData$업종명 <- as.factor(InvestData$업종명)
 InvestData$매도매수구분코드 = as.factor(InvestData$매도매수구분코드)
 InvestData['주문총금액'] = InvestData$실주문단가 * InvestData$주문수량
 # 주문총금액 z score표준화
-InvestData$주문총금액 = scale(InvestData$주문총금액) 
+#InvestData$주문총금액 = scale(InvestData$주문총금액) 
 str(InvestData)
-Invest_sell = InvestData %>% filter(매도매수구분코드==1) %>% select('고객성별구분코드','동일나이군구분코드','업종명','주문총금액')
-Invest_buy = InvestData %>% filter(매도매수구분코드==2) %>% select('고객성별구분코드','동일나이군구분코드','업종명','주문총금액')
 
-##주문수량에 대한 회귀분석
+Invest_sell = InvestData %>% 
+  filter(매도매수구분코드==1) %>% 
+  select('고객성별구분코드','동일나이군구분코드','업종명','주문총금액')
+
+Invest_buy = InvestData %>% 
+  filter(매도매수구분코드==2) %>% 
+  select('고객성별구분코드','동일나이군구분코드','업종명','주문총금액')
+
+##주문총금액에 대한 회귀분석
 
 #고객성별구분코드, 동일나이군구분코드, 업종명만 독립변수로 사용
 
@@ -124,7 +133,6 @@ summary(Invest_buy_lm)
 OnehotInvest_sell <- one_hot(as.data.table(Invest_sell))
 OnehotInvest_buy <- one_hot(as.data.table(Invest_buy))
 
-str(OnehotInvest_sell)
 ####매도 릿지 라쏘
 Invest_x <- as.matrix(OnehotInvest_sell %>% select(-'주문총금액'))
 Invest_y <- as.matrix(OnehotInvest_sell %>% select('주문총금액'))
@@ -134,6 +142,7 @@ sell_ridge_c <- cv.glmnet(Invest_x, Invest_y, family = "gaussian", alpha = 0)
 
 coef(sell_lasso_c)
 coef(sell_ridge_c)
+
 ###매수 릿지 라쏘
 Invest_x <- as.matrix(OnehotInvest_buy %>% select(-'주문총금액'))
 Invest_y <- as.matrix(OnehotInvest_buy %>% select('주문총금액'))
