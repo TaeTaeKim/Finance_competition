@@ -57,7 +57,7 @@ online_x <- as.matrix(onehotonline %>% select(-'매출금액'))
 online_y <- as.matrix(onehotonline %>% select('매출금액'))
 
 online_lasso <- cv.glmnet(online_x, online_y, family = "gaussian")
-online_ridge <- cv.glmnet(online_tr_x, online_tr_y, family = "gaussian", alpha = 0)
+online_ridge <- cv.glmnet(online_x, online_y, family = "gaussian", alpha = 0)
 
 coef(online_lasso)
 coef(online_ridge)
