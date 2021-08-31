@@ -35,6 +35,11 @@ StoreData_b$거리두기 <- as.factor(StoreData_b$거리두기)
 lm_storeb <- lm(카드매출금액 ~ ., data = StoreData_b)
 summary(lm_storeb)
 
+#교차항 추가
+lm_storb_inter <- lm(카드매출금액 ~ 광역시도명*거리두기 + 업종대분류*거리두기, data = StoreData_b)
+summary(lm_storb_inter)
+
+
 #lasso, ridge
 onehot_store <- one_hot(as.data.table(StoreData_b))
 
