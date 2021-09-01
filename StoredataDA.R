@@ -36,7 +36,7 @@ lm_storeb <- lm(카드매출금액 ~ ., data = StoreData_b)
 summary(lm_storeb)
 
 #교차항 추가
-lm_storb_inter <- lm(카드매출금액 ~ 광역시도명*거리두기 + 업종대분류*거리두기, data = StoreData_b)
+lm_storb_inter <- lm(카드매출금액 ~ .+업종대분류*거리두기, data = StoreData_b)
 summary(lm_storb_inter)
 
 
@@ -61,5 +61,5 @@ StoreData_m$광역시도명 <- as.factor(StoreData_m$광역시도명)
 StoreData_m$업종중분류 <- as.factor(StoreData_m$업종중분류)
 StoreData_m$거리두기 <- as.factor(StoreData_m$거리두기)
 
-lm_storem <- lm(카드매출금액 ~ ., data = StoreData_m)
+lm_storem <- lm(카드매출금액 ~ .+업종중분류*거리두기, data = StoreData_m)
 summary(lm_storem)
