@@ -13,13 +13,22 @@ summary(shinhan_lm_cross2)
 
 
 
-
+online$거리두기 = as.numeric(online$거리두기)
+str(online)
 lm_online_inter2 <- lm(매출금액 ~ . + 성별 * 거리두기 +
                             연령 * 거리두기+품목대분류명*거리두기, data = online)
 
 
 
 summary(lm_online_inter2)
+#### 보니까 기준이 되는 factor를 빼고 돌려야함
+#### 그러면 해석을 어떻게 해야지?
+product = unique(online$품목대분류명)
+sex = unique(online$성별)
+age = unique(online$연령)
+region = unique(online$고객소재지_시군구)
+a = expand.grid(product,sex,age,region)
+b = for(i in 1:length(a)){
+  predict(lm_online_inter2,a[i,])
+}
 
-
-unique(StoreData$업종대분류)
