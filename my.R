@@ -6,7 +6,7 @@ library(readxl)
 ######### working directory설정
 
 #setwd(r'(C:\Users\hyeon\Desktop\Hyeon\Finance_competition\data)')
-setwd("C:/Users/TaeyunKim/Documents/R_script/FInance_data")
+setwd("C:/Users/hc07c/Documents/R/공모전데이터/")
 
 
 # ===========1. 신한은행 데이터 로드=============
@@ -26,7 +26,6 @@ shinhan <- rbind(shinhan1903, shinhan1909, shinhan2003, shinhan2009, shinhan2103
 shinhan <- as.data.frame(shinhan)
 # 메모리 아끼기 위해서 나머지 변수 다 지움.
 rm(shinhan1903); rm(shinhan1909); rm(shinhan2003); rm(shinhan2009);rm(shinhan2103)
-
 
 
 # ===========2. 비씨카드 온라인 매출 데이터 로드=============

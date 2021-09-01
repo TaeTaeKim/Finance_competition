@@ -103,8 +103,9 @@ InvestData$주소.시도. <- as.factor(InvestData$주소.시도.)
 InvestData$업종명 <- as.factor(InvestData$업종명)
 InvestData$매도매수구분코드 = as.factor(InvestData$매도매수구분코드)
 InvestData['주문총금액'] = InvestData$실주문단가 * InvestData$주문수량
+
 # 주문총금액 z score표준화
-InvestData$주문총금액 = scale(InvestData$주문총금액) 
+#InvestData$주문총금액 = scale(InvestData$주문총금액) 
 str(InvestData)
 Invest_sell = InvestData %>% filter(매도매수구분코드==1) %>% select('고객성별구분코드','동일나이군구분코드','업종명','주문총금액')
 Invest_buy = InvestData %>% filter(매도매수구분코드==2) %>% select('고객성별구분코드','동일나이군구분코드','업종명','주문총금액')
