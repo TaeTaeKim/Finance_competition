@@ -1,49 +1,65 @@
 StoreData$거리두기 <- ifelse(StoreData$기준년월 %in% c(201903, 201909), 0,
                          ifelse(StoreData$기준년월 == 202003, 1, 3))
 
-#업종에 따른 카드매출금액 총액
-sales_type <- StoreData %>% 
-  filter(!is.na(업종대분류)) %>%
-  group_by(업종중분류, 기준년월) %>%
-  summarise(카드총매출 = sum(카드매출금액))
+#원래 있던 일차원분석은 simple analysis에서 확인가능
 
-sales_type <- as.data.frame(sales_type)
-sales_type
-View(sales_type)
+StoreData <- StoreData %>%
+  filter(!is.na(StoreData$업종대분류))
+#업종자체가 표기되어 있지 않은 데이터 삭제(72개)
 
-#매출이 감소한 업종 : 다단계, 대중교통, 면세점, 문구용품, 미용/사우나/마사지,
-#보건소, 부페, 여행사, 예술품, 웨딩, 유흥주점, 의류, 자동차정비, 전시/관람/체험,
-#주점 및 주류판매, 컴퓨터소프트웨어, 한식, 항공사, 휴게소, 
-#매출이 증가한 업종 : 동물병원, 상품권, 식품, 여객선, 온라인, 음반/음원/영상, 자동차,
-#전기/가전, 전문용역서비스, 터널/유료도로/하이패스, 한의학, 해외사용, 화물운송업, 
+StoreData <- StoreData %>%
+  filter(카드매출금액 != 0)
+#카드매출금액이 아예 표기가 안된 행(R에서는 0으로 취급) 삭제
 
+StoreData <- StoreData %>%
+  filter(!(업종소분류 %in% c('웹툰/웹소설', '요식배달', '온라인게임', '대형 이커머스',
+                      '온라인종합컨텐츠', '인터넷강의', '시험접수')))
 
-#지역에 따른 업종별 카드매출금액 총액
-sales_region <- StoreData %>% 
-  filter(!is.na(업종대분류)) %>%
-  group_by(광역시도명, 업종중분류, 기준년월) %>%
-  summarise(카드총매출 = sum(카드매출금액))
+#2019년 데이터가 없는 업종들 삭제
 
-sales_region <- as.data.frame(sales_region)
-sales_region
+#터널/하이패스/유료도로 => 19년부터 데이터는 있으나 20년에 들어서 전국적으로 유료도로가 늘어남
+#해외사용 => only 서울만 있음
+#하나하나 다 찾아내기는 어려울 것 같아 분석하면서 이상한 점이 있으면 찾아서 확인해보는 것이 좋을듯
 
 
-#업종별 점당 매출 평균
-sales_type_mean <- StoreData %>% 
-  filter(!is.na(업종대분류)) %>%
-  group_by(업종중분류, 기준년월) %>%
-  summarise(점당평균매출 = mean(점당매출금액))
 
-sales_type_mean <- as.data.frame(sales_type_mean)
-sales_type_mean
+#대분류 회귀분석
+#단순
+StoreData_b <- StoreData %>%
+  select(광역시도명, 업종대분류, 카드매출금액, 거리두기)
+
+StoreData_b$광역시도명 <- as.factor(StoreData_b$광역시도명)
+StoreData_b$업종대분류 <- as.factor(StoreData_b$업종대분류)
+StoreData_b$거리두기 <- as.factor(StoreData_b$거리두기)
+
+lm_storeb <- lm(카드매출금액 ~ ., data = StoreData_b)
+summary(lm_storeb)
+
+#교차항 추가
+lm_storb_inter <- lm(카드매출금액 ~ 광역시도명*거리두기 + 업종대분류*거리두기, data = StoreData_b)
+summary(lm_storb_inter)
 
 
-#지역에 따른 업종별 점당 매출 평균
-sales_region_mean <- StoreData %>% 
-  filter(!is.na(업종대분류)) %>%
-  group_by(광역시도명,업종중분류, 기준년월) %>%
-  summarise(점당평균매출 = mean(점당매출금액))
+#lasso, ridge
+onehot_store <- one_hot(as.data.table(StoreData_b))
 
-sales_region_mean <- as.data.frame(sales_region_mean)
-sales_region_mean
+store_x <- as.matrix(onehot_store %>% select(-'카드매출금액'))
+store_y <- as.matrix(onehot_store %>% select('카드매출금액'))
 
+store_lasso <- cv.glmnet(store_x, store_y, family = "gaussian")
+store_ridge <- cv.glmnet(store_x, store_y, family = "gaussian", alpha = 0)
+
+coef(store_lasso)
+coef(store_ridge)
+
+
+#중분류 회귀분석
+StoreData_m <- StoreData %>%
+  select(광역시도명, 업종중분류, 카드매출금액, 거리두기)
+
+StoreData_m$광역시도명 <- as.factor(StoreData_m$광역시도명)
+StoreData_m$업종중분류 <- as.factor(StoreData_m$업종중분류)
+StoreData_m$거리두기 <- as.factor(StoreData_m$거리두기)
+
+lm_storem <- lm(카드매출금액 ~ ., data = StoreData_m)
+summary(lm_storem)
