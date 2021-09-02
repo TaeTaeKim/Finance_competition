@@ -42,7 +42,7 @@ on <- coef(lm_online_inter2)
 
 write.csv(on, "online_coef.csv", fileEncoding = "UTF-8")
 
-on <- read.csv("online_coef.csv")
+on <- read.csv("online_coef.csv", fileEncoding = "UTF-8")
 names(on) <- c('변수', '계수')
 
 on$변수 <- gsub("고객소재지_시군구", "", on$변수)
@@ -80,3 +80,20 @@ ggplot(on_age3, aes(x = 변수, y = 계수)) +
   coord_flip() + xlab("") + ylab("") + 
   ggtitle("거리두기 3단계 연령에 따른 교차항 계수")
 
+##유의미한 계수만
+#신한은 다 유의미함
+on_sex_sig <- on[47, ]
+on_age_sig <- on[c(49, 50, 53:56), ]
+
+ggplot(on_sex_sig, aes(x = 변수, y = 계수)) + 
+  geom_bar(stat = 'identity', fill = 'steelblue', width = 0.2) +
+  xlab("") + ylab("") + 
+  ggtitle("거리두기 성별에 따른 교차항 계수")
+
+
+ggplot(on_age_sig, aes(x = 변수, y = 계수)) + 
+  geom_bar(stat = 'identity', fill = 'steelblue')+
+  coord_flip() + xlab("") + ylab("") + 
+  ggtitle("거리두기 연령에 따른 교차항 계수") +
+  scale_x_discrete(limits = c('50대:거리두기3','40대:거리두기3', '30대:거리두기3', 
+                              '20세 미만:거리두기3', '40대:거리두기1', '30대:거리두기1'))
