@@ -69,7 +69,6 @@ onehotonline <- one_hot(as.data.table(online))
 #onehotonline_tr <- one_hot(as.data.table(online_tr))
 #onehotonline_ts <- one_hot(as.data.table(online_ts))
 
-
 online_x <- as.matrix(onehotonline %>% select(-'매출금액'))
 online_y <- as.matrix(onehotonline %>% select('매출금액'))
 

@@ -92,8 +92,9 @@ online %>%
 
 ##신한데이터
 #training과 test를 위해 80:20으로 데이터를 나눔
+shinhan_d$거리두기 = as.numeric(shinhan_d$거리두기)
 sp <- sample(1:nrow(shinhan_d), ceiling(nrow(shinhan_d)*0.8))
-
+str(shinhan_d)
 shinhan_tr <- shinhan_d[sp, ]
 shinhan_ts <- shinhan_d[-sp, ]
 
@@ -107,7 +108,7 @@ summary(lm_shinhan_tr)
 pred_sh <- predict(lm_shinhan_tr, shinhan_ts)
 error_sh <- pred_sh - shinhan_ts$총소비금액
 plot(error_sh)
-head(error_sh)
+mean(error_sh)
 #128777.6 등 꽤 잘맞추는 것도 있음
 
 rm(shinhan_lm_cross2, shinhan_tr, shinhan_ts)
