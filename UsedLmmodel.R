@@ -22,6 +22,7 @@ summary(lm_online_inter)
 online$거리두기 = as.numeric(online$거리두기)
 
 #training과 test를 위해 80:20으로 데이터를 나눔
+set.seed(1)
 sp <- sample(1:nrow(online), ceiling(nrow(online)*0.8))
 
 online_tr <- online[sp, ]
@@ -39,7 +40,7 @@ pred <- predict(lm_online_tr, online_ts)
 error <- pred - online_ts$매출금액
 plot(error)
 head(error)
-sd(error)
+mean(error^2) %>% sqrt()
 
 
 #4단계 예측시 필요한 데이터 셋을 만듦
@@ -77,6 +78,7 @@ online %>%
 shinhan_d$거리두기 = as.numeric(shinhan_d$거리두기)
 
 #training과 test를 위해 80:20으로 데이터를 나눔
+set.seed(1)
 sp <- sample(1:nrow(shinhan_d), ceiling(nrow(shinhan_d)*0.8))
 shinhan_tr <- shinhan_d[sp, ]
 shinhan_ts <- shinhan_d[-sp, ]
@@ -92,8 +94,7 @@ summary(lm_shinhan_tr)
 pred_sh <- predict(lm_shinhan_tr, shinhan_ts)
 error_sh <- pred_sh - shinhan_ts$총소비금액
 plot(error_sh)
-mean(error_sh)
-sd(error_sh)
+mean(error_sh^2) %>% sqrt()
 
 #메모리 사용을 위해 필요없는 데이터 삭제
 rm(shinhan_lm_cross2, shinhan_tr, shinhan_ts)
