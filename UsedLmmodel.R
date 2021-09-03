@@ -21,12 +21,13 @@ summary(lm_online_inter)
 
 #온라인 데이터 
 online$거리두기 = as.numeric(online$거리두기)
-
+str(online)
 #training과 test를 위해 80:20으로 데이터를 나눔
 set.seed(11)
 sp <- sample(1:nrow(online), ceiling(nrow(online)*0.8))
 
 online_tr <- online[sp, ]
+boxplot(online_tr$매출금액,outline=F)
 online_ts <- online[-sp, ]
 
 
@@ -39,7 +40,9 @@ summary(lm_online_tr)
 #test data를 이용해 lm_online_tr 모델평가
 pred <- predict(lm_online_tr, online_ts)
 error <- pred - online_ts$매출금액
-plot(error)
+plot(error,ylim = c(min(error),-min(error)))
+abline(a = 0,b=1,col='red')
+abline()
 head(error)
 mean(error^2) %>% sqrt()
 
@@ -83,7 +86,7 @@ set.seed(11)
 sp <- sample(1:nrow(shinhan_d), ceiling(nrow(shinhan_d)*0.8))
 shinhan_tr <- shinhan_d[sp, ]
 shinhan_ts <- shinhan_d[-sp, ]
-
+boxplot(shinhan_tr$총소비금액)
 
 #회귀분석
 lm_shinhan_tr <- lm(총소비금액 ~ . + 나이*거리두기 + 성별*거리두기, 
@@ -94,11 +97,11 @@ summary(lm_shinhan_tr)
 #test data를 이용해 lm_shinhan_tr 모델평가
 pred_sh <- predict(lm_shinhan_tr, shinhan_ts)
 error_sh <- pred_sh - shinhan_ts$총소비금액
-
+plot(error_sh)
 #메모리 사용을 위해 필요없는 데이터 삭제
 rm(lm_shinhan_inter, shinhan_tr, shinhan_ts)
 
-plot(error_sh)
+
 mean(error_sh^2) %>% sqrt()
 
 
