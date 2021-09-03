@@ -3,12 +3,13 @@
 #shinhanDA와 onlinedata에서 전처리한 데이터를 가지고 진행
 
 #shinhan data
-shinhan_lm_cross2 <- lm(총소비금액 ~ .+나이*거리두기+성별*거리두기,data=shinhan_d)
+lm_shinhan_inter <- lm(총소비금액 ~ .+나이*거리두기+성별*거리두기,data=shinhan_d)
 summary(lm_shinhan_inter)
 
 
 #online data 
-lm_online_inter2 <- lm(매출금액 ~ .+성별 * 거리두기+연령 * 거리두기, data = online)
+lm_online_inter <- lm(매출금액 ~ .+성별 * 거리두기+연령 * 거리두기 +
+                            품목대분류명 *거리두기, data = online)
 summary(lm_online_inter)
 
 
@@ -22,7 +23,7 @@ summary(lm_online_inter)
 online$거리두기 = as.numeric(online$거리두기)
 
 #training과 test를 위해 80:20으로 데이터를 나눔
-set.seed(1)
+set.seed(11)
 sp <- sample(1:nrow(online), ceiling(nrow(online)*0.8))
 
 online_tr <- online[sp, ]
@@ -30,8 +31,8 @@ online_ts <- online[-sp, ]
 
 
 #training data로 회귀분석
-lm_online_tr <- lm(매출금액 ~ . + 성별 * 거리두기 +
-                             연령 * 거리두기+품목대분류명*거리두기, data = online_tr)
+lm_online_tr <- lm(매출금액 ~ . + 성별 * 거리두기 + 연령 * 거리두기 +
+                         품목대분류명 * 거리두기, data = online_tr)
 summary(lm_online_tr)
 
 
@@ -78,7 +79,7 @@ online %>%
 shinhan_d$거리두기 = as.numeric(shinhan_d$거리두기)
 
 #training과 test를 위해 80:20으로 데이터를 나눔
-set.seed(1)
+set.seed(11)
 sp <- sample(1:nrow(shinhan_d), ceiling(nrow(shinhan_d)*0.8))
 shinhan_tr <- shinhan_d[sp, ]
 shinhan_ts <- shinhan_d[-sp, ]
@@ -93,11 +94,14 @@ summary(lm_shinhan_tr)
 #test data를 이용해 lm_shinhan_tr 모델평가
 pred_sh <- predict(lm_shinhan_tr, shinhan_ts)
 error_sh <- pred_sh - shinhan_ts$총소비금액
+
+#메모리 사용을 위해 필요없는 데이터 삭제
+rm(lm_shinhan_inter, shinhan_tr, shinhan_ts)
+
 plot(error_sh)
 mean(error_sh^2) %>% sqrt()
 
-#메모리 사용을 위해 필요없는 데이터 삭제
-rm(shinhan_lm_cross2, shinhan_tr, shinhan_ts)
+
 
 
 #예측 데이터셋 만들기

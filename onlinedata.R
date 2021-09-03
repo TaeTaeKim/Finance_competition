@@ -30,5 +30,6 @@ lm_online <- lm(매출금액 ~ ., data = online)
 summary(lm_online)
 
 #교차항 추가
-lm_online_inter <- lm(매출금액 ~ + 성별 * 거리두기 + 연령 * 거리두기, data = online)
+lm_online_inter <- lm(매출금액 ~ . + 성별 * 거리두기 + 연령 * 거리두기 +
+                            품목대분류명 * 거리두기, data = online)
 summary(lm_online_inter)
