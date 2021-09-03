@@ -1,9 +1,13 @@
-### 앞에 my.r에서 Investment 데이터를 load하고 올 것.
+###my.r에서 Investment 데이터를 load하고 올 것.
+
+##Investment 전처리 - 상품명에 해당하는 업종명추가
+
 require(tidyverse)
 library(stringr)
 library(mltools)
 library(data.table)
 library(glmnet)
+
 # 데이터 --> KRX정보데이터시스템.
 KOSPI = read.csv("KOSPI.csv")
 KOSDAC = read.csv("KOSDAC.csv")
@@ -105,13 +109,11 @@ InvestData$동일나이군구분코드 <- as.factor(InvestData$동일나이군�
 InvestData$주소.시도. <- as.factor(InvestData$주소.시도.)
 InvestData$업종명 <- as.factor(InvestData$업종명)
 InvestData$매도매수구분코드 = as.factor(InvestData$매도매수구분코드)
+
+#실주문단가와 주문수량을 곱해 주문총금액 생성
 InvestData['주문총금액'] = InvestData$실주문단가 * InvestData$주문수량
 
-# 주문총금액 z score표준화
-#InvestData$주문총금액 = scale(InvestData$주문총금액) 
-str(InvestData)
-
-
+#매도와 매수를 구분
 Invest_sell = InvestData %>% 
   filter(매도매수구분코드==1) %>% 
   select('고객성별구분코드','동일나이군구분코드','업종명','주문총금액')
@@ -126,193 +128,8 @@ Invest_buy = InvestData %>%
 #고객성별구분코드, 동일나이군구분코드, 업종명만 독립변수로 사용
 
 #단순회귀분석
-Invest_sell_lm <- lm(주문총금액 ~고객성별구분코드 + 동일나이군구분코드 + 업종명, data = Invest_sell)
-summary(Invest_sell_lm)
-Invest_buy_lm =  lm(주문총금액 ~고객성별구분코드 + 동일나이군구분코드 + 업종명, data = Invest_buy)
-summary(Invest_buy_lm)
-
-#Lasso, Ridge
-
-OnehotInvest_sell <- one_hot(as.data.table(Invest_sell))
-OnehotInvest_buy <- one_hot(as.data.table(Invest_buy))
-
-####매도 릿지 라쏘
-Invest_x <- as.matrix(OnehotInvest_sell %>% select(-'주문총금액'))
-Invest_y <- as.matrix(OnehotInvest_sell %>% select('주문총금액'))
-str(Invest_x)
-sell_lasso_c <- cv.glmnet(Invest_x, Invest_y, family = "gaussian")
-sell_ridge_c <- cv.glmnet(Invest_x, Invest_y, family = "gaussian", alpha = 0)
-
-coef(sell_lasso_c)
-coef(sell_ridge_c)
-
-###매수 릿지 라쏘
-Invest_x <- as.matrix(OnehotInvest_buy %>% select(-'주문총금액'))
-Invest_y <- as.matrix(OnehotInvest_buy %>% select('주문총금액'))
-
-buy_lasso_c <- cv.glmnet(Invest_x, Invest_y, family = "gaussian")
-buy_ridge_c <- cv.glmnet(Invest_x, Invest_y, family = "gaussian", alpha = 0)
-
-coef(buy_lasso_c)
-coef(buy_ridge_c)
-
-
-
-##총 주문금액으로 매도매수 구분없이 회귀분석
-
-#단순선형회귀
-Invest_p_lm <- lm(주문총금액 ~ 고객성별구분코드 + 동일나이군구분코드 + 업종명, data = InvestData)
-summary(Invest_p_lm)
-
-
-#Lasso, Ridge
-InvestData_p<- InvestData %>% select('고객성별구분코드', '동일나이군구분코드', '업종명', '주문총금액')
-
-
-
-OnehotInvest <- one_hot(as.data.table(InvestData_p))
-
-Invest_x <- as.matrix(OnehotInvest %>% select(-'주문총금액'))
-Invest_y <- as.matrix(OnehotInvest %>% select('주문총금액'))
-
-fit_lasso_p <- cv.glmnet(Invest_x, Invest_y, family = "gaussian")
-fit_ridge_p <- cv.glmnet(Invest_x, Invest_y, family = "gaussian", alpha = 0)
-
-coef(fit_lasso_p)
-coef(fit_ridge_p)
-
-
-
-
-#----------------------------------------#
-###주문총금액이 아닌 주문수량, 실주문단가에 대한 회귀분석
-
-#주문수량에 대한 회귀분석 - 매도매수 구분없이
-
-#단순회귀분석
-count_lm <- lm(주문수량 ~고객성별구분코드 + 동일나이군구분코드 + 업종명, data = InvestData)
-summary(count_lm)
-
-
-#Lasso, Ridge
-InvestData_c <- InvestData %>% select('고객성별구분코드', '동일나이군구분코드', '업종명', '주문수량')
-
-OnehotInvest <- one_hot(as.data.table(InvestData_c))
-
-Invest_x <- as.matrix(OnehotInvest %>% select(-'주문수량'))
-Invest_y <- as.matrix(OnehotInvest %>% select('주문수량'))
-
-count_lasso <- cv.glmnet(Invest_x, Invest_y, family = "gaussian")
-count_ridge <- cv.glmnet(Invest_x, Invest_y, family = "gaussian", alpha = 0)
-
-coef(count_lasso)
-coef(count_ridge)
-
-
-
-
-##주문수량에 대한 회귀분석 - 매도/매수 구분해서
-Invest_sell = InvestData %>% filter(매도매수구분코드==1) %>% select('고객성별구분코드','동일나이군구분코드','업종명','주문수량')
-Invest_buy = InvestData %>% filter(매도매수구분코드==2) %>% select('고객성별구분코드','동일나이군구분코드','업종명','주문수량')
-
-#매도
-#단순회귀분석
-count_sell_lm <- lm(주문수량 ~고객성별구분코드 + 동일나이군구분코드 + 업종명, data = Invest_sell)
-summary(count_sell_lm)
-
-
-#Lasso, Ridge
-OnehotInvest <- one_hot(as.data.table(Invest_sell))
-
-Invest_x <- as.matrix(OnehotInvest %>% select(-'주문수량'))
-Invest_y <- as.matrix(OnehotInvest %>% select('주문수량'))
-
-count_sell_lasso <- cv.glmnet(Invest_x, Invest_y, family = "gaussian")
-count_sell_ridge <- cv.glmnet(Invest_x, Invest_y, family = "gaussian", alpha = 0)
-
-coef(count_sell_lasso)
-coef(count_sell_ridge)
-
-#매수
-#단순회귀분석
-count_buy_lm <- lm(주문수량 ~고객성별구분코드 + 동일나이군구분코드 + 업종명, data = Invest_buy)
-summary(count_buy_lm)
-
-
-#Lasso, Ridge
-OnehotInvest <- one_hot(as.data.table(Invest_buy))
-
-Invest_x <- as.matrix(OnehotInvest %>% select(-'주문수량'))
-Invest_y <- as.matrix(OnehotInvest %>% select('주문수량'))
-
-count_buy_lasso <- cv.glmnet(Invest_x, Invest_y, family = "gaussian")
-count_buy_ridge <- cv.glmnet(Invest_x, Invest_y, family = "gaussian", alpha = 0)
-
-coef(count_sell_lasso)
-coef(count_sell_ridge)
-
-
-#실주문단가에 대한 회귀분석 - 매도매수 구분없이
-
-#단순회귀분석
-rprice_lm <- lm(실주문단가 ~고객성별구분코드 + 동일나이군구분코드 + 업종명, data = InvestData)
-summary(rprice_lm)
-
-
-#Lasso, Ridge
-Invest_realprice <- InvestData %>% select('고객성별구분코드', '동일나이군구분코드', '업종명', '실주문단가')
-
-OnehotInvest <- one_hot(as.data.table(Invest_realprice))
-
-Invest_x <- as.matrix(OnehotInvest %>% select(-'실주문단가'))
-Invest_y <- as.matrix(OnehotInvest %>% select('실주문단가'))
-
-rprice_lasso <- cv.glmnet(Invest_x, Invest_y, family = "gaussian")
-rprice_ridge <- cv.glmnet(Invest_x, Invest_y, family = "gaussian", alpha = 0)
-
-coef(rprice_lasso)
-coef(rprice_ridge)
-
-
-
-
-##실주문단가에 대한 회귀분석 - 매도/매수 구분해서
-Invest_sell = InvestData %>% filter(매도매수구분코드==1) %>% select('고객성별구분코드','동일나이군구분코드','업종명','실주문단가')
-Invest_buy = InvestData %>% filter(매도매수구분코드==2) %>% select('고객성별구분코드','동일나이군구분코드','업종명','실주문단가')
-
-#매도
-#단순회귀분석
-rprice_sell_lm <- lm(실주문단가 ~고객성별구분코드 + 동일나이군구분코드 + 업종명, data = Invest_sell)
-summary(rprice_sell_lm)
-
-
-#Lasso, Ridge
-OnehotInvest <- one_hot(as.data.table(Invest_sell))
-
-Invest_x <- as.matrix(OnehotInvest %>% select(-'실주문단가'))
-Invest_y <- as.matrix(OnehotInvest %>% select('실주문단가'))
-
-rprice_sell_lasso <- cv.glmnet(Invest_x, Invest_y, family = "gaussian")
-rprice_sell_ridge <- cv.glmnet(Invest_x, Invest_y, family = "gaussian", alpha = 0)
-
-coef(rprice_sell_lasso)
-coef(rprice_sell_ridge)
-
-
-#매수
-#단순회귀분석
-rprice_buy_lm <- lm(실주문단가 ~고객성별구분코드 + 동일나이군구분코드 + 업종명, data = Invest_buy)
-summary(rprice_buy_lm)
-
-
-#Lasso, Ridge
-OnehotInvest <- one_hot(as.data.table(Invest_buy))
-
-Invest_x <- as.matrix(OnehotInvest %>% select(-'실주문단가'))
-Invest_y <- as.matrix(OnehotInvest %>% select('실주문단가'))
-
-rprice_buy_lasso <- cv.glmnet(Invest_x, Invest_y, family = "gaussian")
-rprice_buy_ridge <- cv.glmnet(Invest_x, Invest_y, family = "gaussian", alpha = 0)
-
-coef(rprice_sell_lasso)
-coef(rprice_sell_ridge)
+lm_Invest_sell <- lm(주문총금액 ~고객성별구분코드 + 동일나이군구분코드 + 업종명, data = Invest_sell)
+summary(lm_Invest_sell)
+
+lm_Invest_buy =  lm(주문총금액 ~고객성별구분코드 + 동일나이군구분코드 + 업종명, data = Invest_buy)
+summary(lm_Invest_buy)

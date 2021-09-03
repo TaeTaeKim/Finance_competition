@@ -1,5 +1,5 @@
 ###온라인 소비데이터에 대한 일차원 분석
-library(ggplot2)
+
 #기준년월에 따른 품목별 매출금액 총합
 
 sales_sum <- online %>%
@@ -16,37 +16,11 @@ p+geom_line()+labs(title = "온라인품목별 매출변화")
 #기타결제, 기타교육비, 디지털, 레저, 신선요리재료, 취미/특기 등이 증가세를 보임
 
 #코로나 전후로 데이터를 나눈 후 
-#매출건수 / 매출금액 상위 10개 품목 비교
-#건수로 할 것인가 금액으로 할 것인가?
+#매출금액 상위 10개 품목 비교
 
 online_bc <- online[online$기준년월 %in% c(201903, 201909), ]
 online_ac <- online[online$기준년월 %in% c(202003, 202009, 202103), ]
 
-#매출건수
-count_bc <- online_bc %>%
-  group_by(품목중분류명) %>%
-  summarise(매출건수 = sum(매출건수))
-count_bc <- as.data.frame(count_bc)
-count_bc[order(count_bc$매출건수, decreasing = TRUE), ]
-count_bc10 <- count_bc[order(count_bc$매출건수, decreasing = TRUE), ] %>%
-  head(10)
-rm(count_bc)
-
-count_ac <- online_ac %>%
-  group_by(품목중분류명) %>%
-  summarise(매출건수 = sum(매출건수))
-count_ac <- as.data.frame(count_ac)
-count_ac10 <- count_ac[order(count_ac$매출건수, decreasing = TRUE), ] %>%
-  head(10)
-rm(count_ac)
-
-count_bc10$매출건수평균 <- count_bc10$매출건수 / 2  
-count_ac10$매출건수평균 <- count_ac10$매출건수 / 3
-
-count_bc10
-count_ac10
-
-#매출금액
 sales_bc <- online_bc %>%
   group_by(품목중분류명) %>%
   summarise(매출금액 = sum(매출금액))
@@ -66,10 +40,10 @@ rm(count_ac)
 
 sales_bc10$매출금액평균 <- sales_bc10$매출금액 / 2  
 sales_ac10$매출금액평균 <- sales_ac10$매출금액 / 3
+#코로나 전은 두달치, 코로나 후는 세달치여서 평균으로 비교
 
 sales_bc10
 sales_ac10
-
 
 
 ###주식투자 데이터에 대한 일차원분석
@@ -85,11 +59,13 @@ Invest_buy = InvestData %>% filter(매도매수구분코드==2) %>% select('고�
 buy_sum <- Invest_buy %>%
   group_by(업종명) %>%
   summarise(주문총금액 = sum(주문총금액))
+
 buy_sum <- as.data.frame(buy_sum)
 
 buy_sum10 <- buy_sum %>%
   arrange(desc(), 주문총금액) %>%
   head(10)
+
 rm(buy_sum)
 
 
