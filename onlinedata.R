@@ -33,3 +33,63 @@ summary(lm_online)
 lm_online_inter <- lm(매출금액 ~ . + 성별 * 거리두기 + 연령 * 거리두기 +
                             품목대분류명 * 거리두기, data = online)
 summary(lm_online_inter)
+
+
+#------------------------#
+#온라인데이터 매출금액에 로그 씌운 분석
+online_log <- online
+online_log$매출금액 <- log(online_log$매출금액)
+names(online_log)[5] <- "log_매출금액"
+
+#회귀분석
+lm_online_log <- lm(log_매출금액 ~ . + 성별*거리두기 + 연령*거리두기 +
+                      품목대분류명 * 거리두기, data = online_log)
+summary(lm_online_log)
+
+#log_level의 경우 더미변수 해석
+#exp(계수) - 1
+
+exp(0.2491390) - 1 #여성
+exp(0.0549541) - 1 #성별여성:거리두기1 
+exp(0.0329318) - 1 #성별여성:거리두기3
+exp(0.4964267) - 1 #연령30대
+exp(0.2274273) - 1 #연령40대
+exp(0.1107281) - 1 #연령50대
+exp(-1.7300009) - 1 #연령20세 미만
+exp(-0.1913269) - 1 #연령60대 이상
+exp(-0.2678189) - 1 #연령20세 미만:거리두기1
+exp(-0.1432789) - 1 #연령30대:거리두기1
+exp(-0.0825936) - 1 #연령40대:거리두기1
+exp(-0.0553533) - 1 #연령60대 이상:거리두기1
+exp(-0.1677261) - 1 #연령20세 미만:거리두기3
+exp(-0.1604924) - 1 #연령30대:거리두기3
+exp(0.0297523) - 1 #연령40대:거리두기3
+exp(0.0916623) - 1 #연령50대:거리두기3
+exp(0.1065602) - 1 #연령60대 이상:거리두기3
+
+
+
+##예측
+online_log$거리두기 = as.numeric(online_log$거리두기)
+
+#training과 test를 위해 80:20으로 데이터를 나눔
+set.seed(11)
+sp <- sample(1:nrow(online_log), ceiling(nrow(online_log)*0.8))
+
+online_tr <- online_log[sp, ]
+online_ts <- online_log[-sp, ]
+
+
+#training data로 회귀분석
+lm_online_tr <- lm(log_매출금액 ~ . + 성별 * 거리두기 + 연령 * 거리두기 +
+                     품목대분류명 * 거리두기, data = online_tr)
+summary(lm_online_tr)
+
+
+#test data를 이용해 lm_online_tr 모델평가
+pred <- predict(lm_online_tr, online_ts)
+error <- pred - online_ts$log_매출금액
+plot(error)
+head(error, 30)
+mean(error^2) %>% sqrt()
+mean(online_ts$log_매출금액)
