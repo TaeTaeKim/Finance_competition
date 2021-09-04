@@ -41,6 +41,29 @@ online_log <- online
 online_log$매출금액 <- log(online_log$매출금액)
 names(online_log)[5] <- "log_매출금액"
 
+
+#온라인 원래 데이터 히스토그램
+hist(online$매출금액, breaks = seq(0,410000000,10000))
+ggplot(online, aes(x = 매출금액)) +
+  geom_histogram(binwidth = 1000000)
+
+#온라인 로그 씌운 히스토그램
+hist(online_log$log_매출금액)
+ggplot(online_log, aes(x = log_매출금액)) +
+  geom_histogram()
+
+#온라인 로그 데이터 잔차 검정
+par(mfrow = c(2,2))
+plot(lm_online_log)
+
+#분산분석
+
+#회귀 모델 생성전 거리두기, 성별, 연령과 지출금액의 분산분석
+online_aov_age = aov(log_매출금액~연령*거리두기,data=online_log)
+online_aov_sex = aov(log_매출금액~성별*거리두기,data=online_log)
+summary(online_aov_age)
+summary(online_aov_sex)
+
 #회귀분석
 lm_online_log <- lm(log_매출금액 ~ . + 성별*거리두기 + 연령*거리두기 +
                       품목대분류명 * 거리두기, data = online_log)
@@ -93,3 +116,32 @@ plot(error)
 head(error, 30)
 mean(error^2) %>% sqrt()
 mean(online_ts$log_매출금액)
+
+
+#4단계 예측시 필요한 데이터 셋을 만듦
+product = unique(online$품목대분류명)
+sex = unique(online$성별)
+age = unique(online$연령)
+region = unique(online$고객소재지_시군구)
+set_expect = expand.grid(product,sex,age,region)
+
+#거리두기를 4로 줌
+set_expect$거리두기 <- 4
+names(set_expect)[1:4] <- names(online)[1:4]
+
+#위에서 구한 lm_online_tr로 예측
+online_pred <- predict(lm_online_tr, set_expect)
+head(online_pred)
+
+#예측 데이터 셋에 예측 금액을 합쳐줌
+set_expect$log_매출금액 <- online_pred
+head(set_expect)
+
+#같은 데이터 셋의 3단계 평균매출금액과 비교해봄(예시)
+online_log %>%
+  filter(품목대분류명 == '의류') %>%
+  filter(성별 == '여성') %>%
+  filter(연령 == '40대') %>%
+  filter(고객소재지_시군구 == '구로구') %>% 
+  filter(거리두기 == 3) %>%
+  summarise('3단계 평균매출금액' = mean(log_매출금액))
