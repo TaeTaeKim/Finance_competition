@@ -1,5 +1,5 @@
-###my.r에서 online data load하고 올 것
 
+# -----------------1. 온라인 데이터 전처리 및 가공
 online <- online %>%
   filter(품목중분류명 != '다이어트')
 #품목중분류 중 2019년 데이터가 없는 '다이어트' 행 제거
@@ -11,52 +11,42 @@ online$거리두기 <- ifelse(online$기준년월 %in% c(201903, 201909), 0,
 
 #회귀분석에 사용할 변수 추출
 online <- online %>%
-  select(품목대분류명, 성별, 연령, 고객소재지_시군구, 매출금액, 거리두기)
+  select(품목대분류명, 성별, 연령, 매출금액, 거리두기)
 
-#지역을 서울로 한정
-online <- online %>%
-  filter(!(online$고객소재지_시군구 %in% c('용인시', '수원시', '고양시', '서구', '남동구', '부평구', '강화군', '계양구', '성남시', '미추홀구', '연수구', '동구', '옹진군')))
 
 #범주형 변수 factor 변환
 online$품목대분류명 <- factor(online$품목대분류명)
 online$성별 <- factor(online$성별)
 online$연령 <- factor(online$연령)
-online$고객소재지_시군구 <- factor(online$고객소재지_시군구)
 online$거리두기 <- factor(online$거리두기)
 
+# -----------------2. 기초 통계량 분석
 
-#단순회귀분석
-lm_online <- lm(매출금액 ~ ., data = online)
-summary(lm_online)
-
-#교차항 추가
-lm_online_inter <- lm(매출금액 ~ . + 성별 * 거리두기 + 연령 * 거리두기 +
-                            품목대분류명 * 거리두기, data = online)
-summary(lm_online_inter)
+summary(online)
 
 
-#------------------------#
-#온라인데이터 매출금액에 로그 씌운 분석
-online_log <- online
-online_log$매출금액 <- log(online_log$매출금액)
-names(online_log)[5] <- "log_매출금액"
 
+# 성별 소비금액 박스플랏
+ggplot(data = online,mapping = aes(x=성별,y = 매출금액))+
+  geom_boxplot()+
+  ggtitle("성별 소비금액")+xlab("")+
+  theme(plot.title = element_text(family = "serif", face = "bold", hjust = 0.5, size = 17, color = "darkblue"))+
+  scale_x_discrete(labels =c('남자','여자'))
 
-#온라인 원래 데이터 히스토그램
-hist(online$매출금액, breaks = seq(0,410000000,10000))
-ggplot(online, aes(x = 매출금액)) +
-  geom_histogram(binwidth = 1000000)
+# 연령별 소비금액 박스플랏
+ggplot(data = online,mapping = aes(x=연령,y = 매출금액))+
+  geom_boxplot()+
+  ggtitle("연령별 소비금액")+xlab("")+
+  theme(plot.title = element_text(family = "serif", face = "bold", hjust = 0.5, size = 17, color = "darkblue"))+
+  scale_x_discrete(labels =c('20대','20대미만','30대','40대','50대','60대','70대'))
 
-#온라인 로그 씌운 히스토그램
-hist(online_log$log_매출금액)
-ggplot(online_log, aes(x = log_매출금액)) +
-  geom_histogram()
-
-#온라인 로그 데이터 잔차 검정
-par(mfrow = c(2,2))
-plot(lm_online_log)
-
-#분산분석
+#성별 총소비금액 기초통계 
+summary(online[online$성별=='남성','매출금액'])
+summary(online[online$성별=='여성','매출금액'])
+#연령별 총소비금액 기초통계
+for(i in 2:7){
+  print(summary(shinhan_d[shinhan_d$나이==i,'총소비금액']))
+}
 
 #회귀 모델 생성전 거리두기, 성별, 연령과 지출금액의 분산분석
 online_aov_age = aov(log_매출금액~연령*거리두기,data=online_log)
@@ -64,10 +54,40 @@ online_aov_sex = aov(log_매출금액~성별*거리두기,data=online_log)
 summary(online_aov_age)
 summary(online_aov_sex)
 
-#회귀분석
-lm_online_log <- lm(log_매출금액 ~ . + 성별*거리두기 + 연령*거리두기 +
-                      품목대분류명 * 거리두기, data = online_log)
+#온라인데이터 매출금액에 로그 씌운 분석
+online_log <- online
+online_log$매출금액 <- log(online_log$매출금액)
+names(online_log)[5] <- "log_매출금액"
+str(online_log)
+str(online)
+#온라인 원래 데이터 히스토그램
+hist(online$매출금액, breaks = seq(0,410000000,10000))
+ggplot(online, aes(x = 매출금액)) +
+  geom_histogram(binwidth = 1000000)+ggtitle("Onilne Expenditure Histogram")+
+  theme(plot.title = element_text(hjust=.5))
+
+#온라인 로그 씌운 히스토그램
+hist(online_log$log_매출금액)
+ggplot(online_log, aes(x = log_매출금액)) +
+  geom_histogram()+ggtitle("Onilne log_Expenditure Histogram")+
+  theme(plot.title = element_text(hjust=.5))
+
+
+# -----------------3. 회귀분석
+lm_online_log <- lm(log_매출금액 ~ . + 성별*거리두기 + 연령*거리두기, data = online_log)
 summary(lm_online_log)
+
+
+
+#온라인 로그 데이터 잔차 검정
+par(mfrow = c(2,2))
+plot(lm_online_log)
+
+#분산분석
+
+
+
+
 
 #log_level의 경우 더미변수 해석
 #exp(계수) - 1

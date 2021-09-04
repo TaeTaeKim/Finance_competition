@@ -1,6 +1,6 @@
 ###my.r에서 shinhan data load하고 올 것
 
-# -----------------1. 데이터 전처리 및 가공
+# -----------------1. 신한 데이터 전처리 및 가공
 
 #신한데이터에서 총소비금액이 0인 행 제외(246787건)
 shinhan_d <- shinhan %>%
@@ -51,11 +51,15 @@ summary(shinhan_aov_age)
 summary(shinhan_aov_sex)
 
 # -----------------3. 회귀분석
-#단순선형회귀
-lm_shinhan <- lm(총소비금액 ~ ., data = shinhan_d)
-summary(lm_shinhan)
 
-#교차항을 넣은 선형회귀
-lm_shinhan_inter <- lm(총소비금액 ~ 지역구*거리두기 + 나이*거리두기 + 성별*거리두기 +
-                              직장인여부*거리두기 + 총수신금액*거리두기, data = shinhan_d)
+lm_shinhan_inter <- lm(총소비금액 ~ .+나이*거리두기+성별*거리두기,data=shinhan_d)
 summary(lm_shinhan_inter)
+
+
+#잔차 정규성 확인
+hist(rstandard(lm_shinhan_inter),main='Hist of Residual')
+qqnorm(rstandard(lm_shinhan_inter))
+qqline(rstandard(lm_shinhan_inter))
+shapiro.test(sample(rstandard(lm_shinhan_inter),5000))
+#잔차의 등분산성.
+plot(lm_shinhan_inter,3)

@@ -1,31 +1,3 @@
-#실제로 분석에 사용할 모델들
-install.packages("lmtest")
-require(lmtest)
-#shinhanDA와 onlinedata에서 전처리한 데이터를 가지고 진행
-
-#shinhan data
-lm_shinhan_inter <- lm(총소비금액 ~ .+나이*거리두기+성별*거리두기,data=shinhan_d)
-summary(lm_shinhan_inter)
-
-
-#잔차 정규성 확인
-hist(rstandard(lm_shinhan_inter),main='Hist of Residual')
-qqnorm(rstandard(lm_shinhan_inter))
-qqline(rstandard(lm_shinhan_inter))
-shapiro.test(sample(rstandard(lm_shinhan_inter),5000))
-#잔차의 등분산성.
-plot(lm_shinhan_inter,3)
-
-
-
-#online data 
-lm_online_inter <- lm(매출금액 ~ .+성별 * 거리두기+연령 * 거리두기 +
-                            품목대분류명 *거리두기, data = online)
-summary(lm_online_inter)
-hist(rstandard(lm_online_inter))
-hist(log(shinhan_d$총소비금액))
-
-
 ##예측 모델링
 
 #거리두기 4단계 시의 지출과 소비를 예측하기 위해 기존에 factor로 사용했던
