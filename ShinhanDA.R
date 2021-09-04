@@ -7,7 +7,7 @@ shinhan_d <- shinhan %>%
   filter(총소비금액 != 0) %>%
   select(지역구, 나이, 성별, 직장인여부, 총소비금액, 총수신금액, 거리두기)
 
-
+str(shinhan_d)
 #범주형 변수 factor 변환
 shinhan_d$지역구 <- as.factor(shinhan_d$지역구) 
 shinhan_d$나이 <- as.factor(shinhan_d$나이) 
