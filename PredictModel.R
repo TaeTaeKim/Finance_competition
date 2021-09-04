@@ -1,34 +1,29 @@
 ##예측 모델링
 
-#거리두기 4단계 시의 지출과 소비를 예측하기 위해 기존에 factor로 사용했던
-#거리두기 변수를 numeric으로 바꿔서 진행
+#온라인데이터
+online_log$거리두기 = as.numeric(online_log$거리두기)
 
-#온라인 데이터 
-online$거리두기 = as.numeric(online$거리두기)
-str(online)
 #training과 test를 위해 80:20으로 데이터를 나눔
 set.seed(11)
-sp <- sample(1:nrow(online), ceiling(nrow(online)*0.8))
+sp <- sample(1:nrow(online_log), ceiling(nrow(online_log)*0.8))
 
-online_tr <- online[sp, ]
-boxplot(online_tr$매출금액,outline=F)
-online_ts <- online[-sp, ]
+online_tr <- online_log[sp, ]
+online_ts <- online_log[-sp, ]
 
 
 #training data로 회귀분석
-lm_online_tr <- lm(매출금액 ~ . + 성별 * 거리두기 + 연령 * 거리두기 +
-                         품목대분류명 * 거리두기, data = online_tr)
+lm_online_tr <- lm(log_매출금액 ~ . + 성별 * 거리두기 + 연령 * 거리두기 +
+                     , data = online_tr)
 summary(lm_online_tr)
 
 
 #test data를 이용해 lm_online_tr 모델평가
 pred <- predict(lm_online_tr, online_ts)
-error <- pred - online_ts$매출금액
-plot(error,ylim = c(min(error),-min(error)))
-abline(a = 0,b=1,col='red')
-abline()
-head(error)
+error <- pred - online_ts$log_매출금액
+plot(error)
+head(error, 30)
 mean(error^2) %>% sqrt()
+mean(online_ts$log_매출금액)
 
 
 #4단계 예측시 필요한 데이터 셋을 만듦
@@ -47,17 +42,17 @@ online_pred <- predict(lm_online_tr, set_expect)
 head(online_pred)
 
 #예측 데이터 셋에 예측 금액을 합쳐줌
-set_expect$매출금액 <- online_pred
+set_expect$log_매출금액 <- online_pred
 head(set_expect)
 
 #같은 데이터 셋의 3단계 평균매출금액과 비교해봄(예시)
-online %>%
+online_log %>%
   filter(품목대분류명 == '의류') %>%
   filter(성별 == '여성') %>%
   filter(연령 == '40대') %>%
   filter(고객소재지_시군구 == '구로구') %>% 
   filter(거리두기 == 3) %>%
-  summarise('3단계 평균매출금액' = mean(매출금액))
+  summarise('3단계 평균매출금액' = mean(log_매출금액))
 
 
 

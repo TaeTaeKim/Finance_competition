@@ -24,7 +24,9 @@ online$거리두기 <- factor(online$거리두기)
 
 summary(online)
 
-
+#이상치 개수파악
+which(online$매출금액 > summary(online$매출금액)[5] + 1.5*IQR(online$매출금액))
+sum(online$매출금액 > summary(online$매출금액)[5] + 1.5*IQR(online$매출금액))
 
 # 성별 소비금액 박스플랏
 ggplot(data = online,mapping = aes(x=성별,y = 매출금액))+
@@ -133,59 +135,3 @@ exp(-0.1604924) - 1 #연령30대:거리두기3
 exp(0.0297523) - 1 #연령40대:거리두기3
 exp(0.0916623) - 1 #연령50대:거리두기3
 exp(0.1065602) - 1 #연령60대 이상:거리두기3
-
-
-
-##예측
-online_log$거리두기 = as.numeric(online_log$거리두기)
-
-#training과 test를 위해 80:20으로 데이터를 나눔
-set.seed(11)
-sp <- sample(1:nrow(online_log), ceiling(nrow(online_log)*0.8))
-
-online_tr <- online_log[sp, ]
-online_ts <- online_log[-sp, ]
-
-
-#training data로 회귀분석
-lm_online_tr <- lm(log_매출금액 ~ . + 성별 * 거리두기 + 연령 * 거리두기 +
-                     품목대분류명 * 거리두기, data = online_tr)
-summary(lm_online_tr)
-
-
-#test data를 이용해 lm_online_tr 모델평가
-pred <- predict(lm_online_tr, online_ts)
-error <- pred - online_ts$log_매출금액
-plot(error)
-head(error, 30)
-mean(error^2) %>% sqrt()
-mean(online_ts$log_매출금액)
-
-
-#4단계 예측시 필요한 데이터 셋을 만듦
-product = unique(online$품목대분류명)
-sex = unique(online$성별)
-age = unique(online$연령)
-region = unique(online$고객소재지_시군구)
-set_expect = expand.grid(product,sex,age,region)
-
-#거리두기를 4로 줌
-set_expect$거리두기 <- 4
-names(set_expect)[1:4] <- names(online)[1:4]
-
-#위에서 구한 lm_online_tr로 예측
-online_pred <- predict(lm_online_tr, set_expect)
-head(online_pred)
-
-#예측 데이터 셋에 예측 금액을 합쳐줌
-set_expect$log_매출금액 <- online_pred
-head(set_expect)
-
-#같은 데이터 셋의 3단계 평균매출금액과 비교해봄(예시)
-online_log %>%
-  filter(품목대분류명 == '의류') %>%
-  filter(성별 == '여성') %>%
-  filter(연령 == '40대') %>%
-  filter(고객소재지_시군구 == '구로구') %>% 
-  filter(거리두기 == 3) %>%
-  summarise('3단계 평균매출금액' = mean(log_매출금액))
