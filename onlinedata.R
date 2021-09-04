@@ -1,5 +1,5 @@
 
-# -----------------1. 온라인 데이터 전처리 및 가공
+# -------------------------------1. 온라인 데이터 전처리 및 가공
 online <- online %>%
   filter(품목중분류명 != '다이어트')
 #품목중분류 중 2019년 데이터가 없는 '다이어트' 행 제거
@@ -20,7 +20,7 @@ online$성별 <- factor(online$성별)
 online$연령 <- factor(online$연령)
 online$거리두기 <- factor(online$거리두기)
 
-# -----------------2. 기초 통계량 분석
+# -------------------------------2. 기초 통계량 분석
 
 summary(online)
 
@@ -44,9 +44,46 @@ ggplot(data = online,mapping = aes(x=연령,y = 매출금액))+
 summary(online[online$성별=='남성','매출금액'])
 summary(online[online$성별=='여성','매출금액'])
 #연령별 총소비금액 기초통계
-for(i in 2:7){
-  print(summary(shinhan_d[shinhan_d$나이==i,'총소비금액']))
+agesummary = c()
+for(i in levels(online$연령)){
+  agesummary = rbind(agesummary,summary(online[online$연령==i,'매출금액']))
 }
+agesummary
+
+#온라인 원래 데이터 히스토그램
+ggplot(online, aes(x = 매출금액)) +
+  geom_histogram(binwidth = 1000000)+ggtitle("Onilne Expenditure Histogram")+
+  theme(plot.title = element_text(hjust=.5))
+
+#이상치 검사
+outlierInd = which(online$매출금액 > summary(online$매출금액)[5] + 1.5*IQR(online$매출금액))
+length(outlierInd)
+length(outlierInd)/nrow(online) #이상치 비율
+
+out <- online[outlierInd,]
+
+
+out_group <- out %>%
+  group_by(품목대분류명) %>%
+  summarise(총매출 = sum(매출금액),
+               평균매출 = mean(매출금액))
+out_group <- cbind(as.data.frame(out_group),out %>% count(품목대분류명))
+names(out_group)[5] = "카운트"
+
+#이상치 그룹 분석.
+out_group = out_group[order(out_group$총매출,decreasing =T),]
+
+#온라인데이터 매출금액에 로그 씌운 분석
+online_log <- online
+online_log$매출금액 <- log(online_log$매출금액)
+names(online_log)[4] <- "log_매출금액"
+str(online_log)
+str(online)
+
+# 온라인 로그 씌운 히스토그램
+ggplot(online_log, aes(x = log_매출금액)) +
+  geom_histogram(binwidth = .3)+ggtitle("Onilne log_Expenditure Histogram")+xlab("log_소비금액")+
+  theme(plot.title = element_text(hjust=.5))
 
 #회귀 모델 생성전 거리두기, 성별, 연령과 지출금액의 분산분석
 online_aov_age = aov(log_매출금액~연령*거리두기,data=online_log)
@@ -54,36 +91,23 @@ online_aov_sex = aov(log_매출금액~성별*거리두기,data=online_log)
 summary(online_aov_age)
 summary(online_aov_sex)
 
-#온라인데이터 매출금액에 로그 씌운 분석
-online_log <- online
-online_log$매출금액 <- log(online_log$매출금액)
-names(online_log)[5] <- "log_매출금액"
-str(online_log)
-str(online)
-#온라인 원래 데이터 히스토그램
-hist(online$매출금액, breaks = seq(0,410000000,10000))
-ggplot(online, aes(x = 매출금액)) +
-  geom_histogram(binwidth = 1000000)+ggtitle("Onilne Expenditure Histogram")+
-  theme(plot.title = element_text(hjust=.5))
-
-#온라인 로그 씌운 히스토그램
-hist(online_log$log_매출금액)
-ggplot(online_log, aes(x = log_매출금액)) +
-  geom_histogram()+ggtitle("Onilne log_Expenditure Histogram")+
-  theme(plot.title = element_text(hjust=.5))
 
 
-# -----------------3. 회귀분석
+
+# -------------------------------3. 회귀분석
 lm_online_log <- lm(log_매출금액 ~ . + 성별*거리두기 + 연령*거리두기, data = online_log)
 summary(lm_online_log)
 
 
 
 #온라인 로그 데이터 잔차 검정
-par(mfrow = c(2,2))
-plot(lm_online_log)
-
-#분산분석
+#잔차 정규성 확인
+par(mfrow=c(1,1))
+hist(rstandard(lm_online_log),main='Hist of Residual')
+qqnorm(rstandard(lm_online_log))
+qqline(rstandard(lm_online_log))
+#잔차의 등분산성.
+plot(lm_online_log,3)
 
 
 

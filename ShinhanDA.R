@@ -60,6 +60,5 @@ summary(lm_shinhan_inter)
 hist(rstandard(lm_shinhan_inter),main='Hist of Residual')
 qqnorm(rstandard(lm_shinhan_inter))
 qqline(rstandard(lm_shinhan_inter))
-shapiro.test(sample(rstandard(lm_shinhan_inter),5000))
 #잔차의 등분산성.
 plot(lm_shinhan_inter,3)
