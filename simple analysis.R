@@ -102,19 +102,27 @@ sales_sum$매출변화 <- (sales_sum$카드총매출_ac - sales_sum$카드총매
 sales_sum$매출변화_퍼센트 <- round(sales_sum$매출변화 / sales_sum$카드총매출_bc, 4)*100
 
 #총매출변화 감소 상위 10개 업종
-sales_sum %>%
+minus10 <- sales_sum %>%
   filter(매출변화 < 0) %>%
   arrange(., 매출변화_퍼센트) %>%
   head(10) %>%
   select(업종중분류, 매출변화, 매출변화_퍼센트)
 
 #총매출변화 증가 상위 10개 업종
-sales_sum %>%
+plus10 <- sales_sum %>%
   filter(매출변화 > 0) %>%
   arrange(desc(), 매출변화_퍼센트) %>%
   head(10) %>%
   select(업종중분류, 매출변화, 매출변화_퍼센트)
 
+#음반/음원/영상의 온라인종합컨텐츠 삭제
+#터널/유료도로/하이패스 삭제
+#해외사용 삭제
+str(StoreData)
+StoreData <- StoreData %>%
+  filter(!(업종소분류 == '온라인종합컨텐츠')) %>%
+  filter(!(업종중분류 == '터널/유료도로/하이패스')) %>%
+  filter(!(업종중분류 == '해외사용'))
 
 #점당평균매출의 변화
 sales_mean_bc <- store_bc %>% 
