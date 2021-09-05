@@ -8,10 +8,10 @@ online <- online %>%
 #거리두기 변수 추가
 online$거리두기 <- ifelse(online$기준년월 %in% c(201903, 201909), 0, 
                       ifelse(online$기준년월 == 202003, 1, 3))
-
+str(online)
 #회귀분석에 사용할 변수 추출
 online <- online %>%
-  select(품목대분류명, 성별, 연령, 매출금액, 거리두기)
+  select(품목대분류명 ,성별, 연령, 매출금액, 거리두기)
 
 
 #범주형 변수 factor 변환
@@ -90,17 +90,18 @@ ggplot(online_log, aes(x = log_매출금액)) +
 #회귀 모델 생성전 거리두기, 성별, 연령과 지출금액의 분산분석
 online_aov_age = aov(log_매출금액~연령*거리두기,data=online_log)
 online_aov_sex = aov(log_매출금액~성별*거리두기,data=online_log)
+online_aov_goods = aov(log_매출금액~품목대분류명*거리두기,data=online_log)
 summary(online_aov_age)
 summary(online_aov_sex)
-
+summary(online_aov_goods)
 
 
 
 # -------------------------------3. 회귀분석
-lm_online_log <- lm(log_매출금액 ~ . + 성별*거리두기 + 연령*거리두기, data = online_log)
+lm_online_log <- lm(log_매출금액 ~ . + 성별*거리두기 + 연령*거리두기+품목대분류명*거리두기, data = online_log)
 summary(lm_online_log)
 
-
+write.csv(lm_online_log$coefficients,file = "onilnecoef.csv")
 
 #온라인 로그 데이터 잔차 검정
 #잔차 정규성 확인
