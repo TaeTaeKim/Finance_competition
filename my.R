@@ -6,7 +6,7 @@ library(readxl)
 ######### working directory설정
 
 #setwd(r'(C:\Users\hyeon\Desktop\Hyeon\Finance_competition\data)')
-setwd("C:/Users/hc07c/Documents/R/공모전데이터/")
+#setwd("C:/Users/hc07c/Documents/R/공모전데이터/")
 
 
 # ===========1. 신한은행 데이터 로드=============
